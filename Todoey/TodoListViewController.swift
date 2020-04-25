@@ -2,7 +2,8 @@
 //  ViewController.swift
 //  Todoey
 //
-//  Created by Philipp Muellauer on 02/12/2019.
+//  Originally created by Philipp Muellauer on 02/12/2019.
+//  Adapted by Denis Aleksandrov on 2020-04-25.
 //  Copyright © 2019 App Brewery. All rights reserved.
 //
 
@@ -15,6 +16,9 @@ class TodoListViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
+        if let items = userDefaults.array(forKey: "TodoListArray") as? [String] {
+            itemArray = items
+        }
     }
     
     //MARK - Tableview Datasource Methods
