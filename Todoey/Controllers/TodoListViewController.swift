@@ -10,25 +10,31 @@
 import UIKit
 
 class TodoListViewController: UITableViewController {
-    var itemArray = [Item]()
+    var itemArray = [ItemPList]()
     //var userDefaults = UserDefaults.standard
     let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        #if CoreData
+            print("TodoListViewController::" + #function + " => CoreData Target")
+        #else
+            print("TodoListViewController::" + #function + " => PList Target")
+        #endif
+        
         print("TodoListViewController::" + #function + " => ")
         print(dataFilePath)
         
-//        let newItem1 = Item()
+//        let newItem1 = ItemPList()
 //        newItem1.title = "First"
 //        itemArray.append(newItem1)
 //
-//        let newItem2 = Item()
+//        let newItem2 = ItemPList()
 //        newItem2.title = "Second"
 //        itemArray.append(newItem2)
 //
-//        let newItem3 = Item()
+//        let newItem3 = ItemPList()
 //        newItem3.title = "Third"
 //        itemArray.append(newItem3)
         
@@ -66,7 +72,7 @@ class TodoListViewController: UITableViewController {
         let alert = UIAlertController(title: "Add New Todoey Action", message: "", preferredStyle: .alert)
         
         let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
-            let newItem = Item()
+            let newItem = ItemPList()
             newItem.title = textField.text!
             self.itemArray.append(newItem)
             self.saveItems()
@@ -97,7 +103,7 @@ class TodoListViewController: UITableViewController {
         if let safeData = try? Data(contentsOf: dataFilePath!) {
             let decoder = PropertyListDecoder()
             do {
-                itemArray = try decoder.decode([Item].self, from: safeData)
+                itemArray = try decoder.decode([ItemPList].self, from: safeData)
             } catch {
                 print("Error decoding item array: \(error)")
             }

@@ -1,5 +1,5 @@
 //
-//  Item.swift
+//  ItemPList.swift
 //  Todoey
 //
 //  Created by Denis Aleksandrov on 4/27/20.
@@ -8,7 +8,7 @@
 
 import Foundation
 
-class Item: Codable {
+class ItemPList: Codable {
     var title: String = ""
     var done:  Bool   = false
 }
