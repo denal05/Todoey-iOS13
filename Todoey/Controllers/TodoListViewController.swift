@@ -66,7 +66,12 @@ class TodoListViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         #if CoreData
+        // An example of Updating the itemArray and then saveItems() to DB:
         //itemArray[indexPath.row].setValue("Completed!", forKey: "title")
+        
+        // An example of Deleting an Item from DB and removing it from the itemArray:
+        //context.delete(itemArray[indexPath.row])
+        //itemArray.remove(at: indexPath.row)
         #else
         #endif
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
