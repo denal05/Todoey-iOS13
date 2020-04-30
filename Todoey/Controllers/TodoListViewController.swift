@@ -8,9 +8,15 @@
 //
 
 import UIKit
+import CoreData
 
 class TodoListViewController: UITableViewController {
+    #if CoreData
+    var itemArray = [Item]()
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    #else
     var itemArray = [ItemPList]()
+    #endif
     //var userDefaults = UserDefaults.standard
     let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
     
@@ -38,7 +44,10 @@ class TodoListViewController: UITableViewController {
 //        newItem3.title = "Third"
 //        itemArray.append(newItem3)
         
+        #if CoreData
+        #else
         loadItems()
+        #endif
     }
     
     //MARK - Tableview Datasource Methods
@@ -72,8 +81,13 @@ class TodoListViewController: UITableViewController {
         let alert = UIAlertController(title: "Add New Todoey Action", message: "", preferredStyle: .alert)
         
         let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
+            #if CoreData
+            let newItem = Item(context: self.context)
+            #else
             let newItem = ItemPList()
+            #endif
             newItem.title = textField.text!
+            newItem.done = false
             self.itemArray.append(newItem)
             self.saveItems()
         }
@@ -89,6 +103,13 @@ class TodoListViewController: UITableViewController {
     }
     
     func saveItems() {
+        #if CoreData
+        do {
+            try context.save()
+        } catch {
+            print("Error saving context and Creating item in DB: \(error)")
+        }
+        #else
         let encoder = PropertyListEncoder()
         do {
             let data = try encoder.encode(itemArray)
@@ -96,10 +117,13 @@ class TodoListViewController: UITableViewController {
         } catch {
             print("Error encoding item array: \(error)")
         }
+        #endif
         tableView.reloadData()
     }
     
     func loadItems() {
+        #if CoreData
+        #else
         if let safeData = try? Data(contentsOf: dataFilePath!) {
             let decoder = PropertyListDecoder()
             do {
@@ -108,6 +132,7 @@ class TodoListViewController: UITableViewController {
                 print("Error decoding item array: \(error)")
             }
         }
+        #endif
     }
     
 }
