@@ -44,10 +44,7 @@ class TodoListViewController: UITableViewController {
 //        newItem3.title = "Third"
 //        itemArray.append(newItem3)
         
-        #if CoreData
-        #else
         loadItems()
-        #endif
     }
     
     //MARK - Tableview Datasource Methods
@@ -123,6 +120,12 @@ class TodoListViewController: UITableViewController {
     
     func loadItems() {
         #if CoreData
+        let request: NSFetchRequest<Item> = Item.fetchRequest()
+        do {
+            itemArray = try context.fetch(request)
+        } catch {
+            print("Error fetching from context and Reading item from DB: \(error)")
+        }
         #else
         if let safeData = try? Data(contentsOf: dataFilePath!) {
             let decoder = PropertyListDecoder()
