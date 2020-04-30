@@ -45,6 +45,7 @@ class TodoListViewController: UITableViewController {
 //        itemArray.append(newItem3)
         
         loadItems()
+        //searchBar.delegate = self
     }
     
     //MARK - Tableview Datasource Methods
@@ -127,9 +128,8 @@ class TodoListViewController: UITableViewController {
         tableView.reloadData()
     }
     
-    func loadItems() {
+    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest()) {
         #if CoreData
-        let request: NSFetchRequest<Item> = Item.fetchRequest()
         do {
             itemArray = try context.fetch(request)
         } catch {
@@ -145,7 +145,24 @@ class TodoListViewController: UITableViewController {
             }
         }
         #endif
+        
+        tableView.reloadData()
     }
-    
 }
 
+//MARK: - Search Bar Methods
+extension TodoListViewController: UISearchBarDelegate {
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        #if CoreData
+        let request: NSFetchRequest<Item> = Item.fetchRequest()
+        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        // Next, we're going to give an array with a single item back to request.sortDescriptors
+        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+        
+        loadItems(with: request)
+        #else
+        #endif
+        
+        print(#function + " => \"" + searchBar.text! + "\"")
+    }
+}
