@@ -36,20 +36,30 @@ class CategoryViewController: UITableViewController {
     // MARK: - Table view data source methods
     
     override func numberOfSections(in tableView: UITableView) -> Int {
-        // #warning Incomplete implementation, return the number of sections
         return 1
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        // #warning Incomplete implementation, return the number of rows
+        #if CoreData
         return categoryArray.count
+        #elseif Realm
+        // #TODO Implement categories for target Realm
+        return 1
+        #else
+        // #TODO Implement categories for target PList
+        return 0
+        #endif
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
 
+        #if CoreData
         let category = categoryArray[indexPath.row]
         cell.textLabel?.text = category.name
+        #elseif Realm
+        #else
+        #endif
 
         return cell
     }
@@ -129,7 +139,11 @@ class CategoryViewController: UITableViewController {
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         let destinationVC = segue.destination as! TodoListViewController
         if let safeIndexPath = tableView.indexPathForSelectedRow {
+            #if CoreData
             destinationVC.selectedCategory = categoryArray[safeIndexPath.row]
+            #elseif Realm
+            #else
+            #endif
         }
     }
     
@@ -150,10 +164,11 @@ class CategoryViewController: UITableViewController {
         let action = UIAlertAction(title: "Add Category", style: .default) { (action) in
             #if CoreData
             let newCategory = `Category`(context: self.context)
-            #else
-            #endif
             newCategory.name = textField.text!
             self.categoryArray.append(newCategory)
+            #else
+            #endif
+            
             self.saveCategories()
         }
         
