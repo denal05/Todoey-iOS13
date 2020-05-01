@@ -14,10 +14,29 @@ import CoreData
 class TodoListViewController: UITableViewController {
     #if CoreData
     var itemArray = [Item]()
+    var selectedCategory: `Category`? {
+        didSet {
+            loadItems()
+        }
+    }
+    
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     #else
     var itemArray = [ItemPList]()
+    
+    //let newItem1 = ItemPList()
+    //newItem1.title = "First"
+    //itemArray.append(newItem1)
+    //
+    //let newItem2 = ItemPList()
+    //newItem2.title = "Second"
+    //itemArray.append(newItem2)
+    //
+    //let newItem3 = ItemPList()
+    //newItem3.title = "Third"
+    //itemArray.append(newItem3)
     #endif
+    
     //var userDefaults = UserDefaults.standard
     let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
     
@@ -27,19 +46,6 @@ class TodoListViewController: UITableViewController {
         print("TodoListViewController::" + #function + " => ")
         print(dataFilePath)
         
-//        let newItem1 = ItemPList()
-//        newItem1.title = "First"
-//        itemArray.append(newItem1)
-//
-//        let newItem2 = ItemPList()
-//        newItem2.title = "Second"
-//        itemArray.append(newItem2)
-//
-//        let newItem3 = ItemPList()
-//        newItem3.title = "Third"
-//        itemArray.append(newItem3)
-        
-        loadItems()
         //searchBar.delegate = self
     }
     
@@ -85,6 +91,7 @@ class TodoListViewController: UITableViewController {
         let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
             #if CoreData
             let newItem = Item(context: self.context)
+            newItem.parentCategory = self.selectedCategory
             #else
             let newItem = ItemPList()
             #endif
@@ -123,8 +130,16 @@ class TodoListViewController: UITableViewController {
         tableView.reloadData()
     }
     
-    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest()) {
+    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest(), and predicate: NSPredicate? = nil) {
         #if CoreData
+        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHED %@", selectedCategory!.name!)
+        
+        if let additionalPredicate = predicate {
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, additionalPredicate])
+        } else {
+            request.predicate = categoryPredicate
+        }
+
         do {
             itemArray = try context.fetch(request)
         } catch {
@@ -150,11 +165,11 @@ extension TodoListViewController: UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         #if CoreData
         let request: NSFetchRequest<Item> = Item.fetchRequest()
-        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
         // Next, we're going to give an array with a single item back to request.sortDescriptors
         request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
         
-        loadItems(with: request)
+        loadItems(with: request, and: predicate)
         #else
         #endif
         

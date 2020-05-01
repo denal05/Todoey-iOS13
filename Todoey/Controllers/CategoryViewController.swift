@@ -126,22 +126,20 @@ class CategoryViewController: UITableViewController {
     }
     
     // MARK: - Table view delegate methods
-    /*
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        let destinationVC = segue.destination as! TodoListViewController
+        if let safeIndexPath = tableView.indexPathForSelectedRow {
+            destinationVC.selectedCategory = categoryArray[safeIndexPath.row]
+        }
+    }
+    
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         #if CoreData
-        // An example of Updating the itemArray and then saveItems() to DB:
-        //itemArray[indexPath.row].setValue("Completed!", forKey: "title")
-        
-        // An example of Deleting an Item from DB and removing it from the itemArray:
-        //context.delete(itemArray[indexPath.row])
-        //itemArray.remove(at: indexPath.row)
+        performSegue(withIdentifier: "goToItems", sender: self)
         #else
         #endif
-        itemArray[indexPath.row].done = !itemArray[indexPath.row].done
-        saveItems()
         tableView.deselectRow(at: indexPath, animated: true)
     }
-    */
     
     // MARK: - Add New Categories
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
