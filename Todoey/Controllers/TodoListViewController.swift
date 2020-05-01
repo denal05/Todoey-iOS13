@@ -10,6 +10,7 @@
 import UIKit
 import CoreData
 
+// #TODO Refactor class from TodoListViewController into ItemsViewController
 class TodoListViewController: UITableViewController {
     #if CoreData
     var itemArray = [Item]()
@@ -22,13 +23,7 @@ class TodoListViewController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        #if CoreData
-            print("TodoListViewController::" + #function + " => CoreData Target")
-        #else
-            print("TodoListViewController::" + #function + " => PList Target")
-        #endif
-        
+
         print("TodoListViewController::" + #function + " => ")
         print(dataFilePath)
         
@@ -48,13 +43,13 @@ class TodoListViewController: UITableViewController {
         //searchBar.delegate = self
     }
     
-    //MARK - Tableview Datasource Methods
+    //MARK: - Tableview Datasource Methods
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return itemArray.count
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
+        let cell = tableView.dequeueReusableCell(withIdentifier: "ItemCell", for: indexPath)
         
         let item = itemArray[indexPath.row]
         cell.textLabel?.text = item.title
@@ -63,7 +58,7 @@ class TodoListViewController: UITableViewController {
         return cell
     }
     
-    //MARK - TableView Delegate Methods
+    //MARK: - TableView Delegate Methods
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         #if CoreData
@@ -80,12 +75,12 @@ class TodoListViewController: UITableViewController {
         tableView.deselectRow(at: indexPath, animated: true)
     }
     
-    //MARK - Add New Items
+    //MARK: - Add New Items
     
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
         var textField = UITextField()
         
-        let alert = UIAlertController(title: "Add New Todoey Action", message: "", preferredStyle: .alert)
+        let alert = UIAlertController(title: "Add New Todoey Item", message: "", preferredStyle: .alert)
         
         let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
             #if CoreData

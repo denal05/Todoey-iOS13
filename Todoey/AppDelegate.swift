@@ -18,6 +18,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         //print(#function + " => " + NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).last! as String)
+        #if CoreData
+            print(#function + " => CoreData Target")
+        #elseif Realm
+            print(#function + " => Realm Target")
+        #else
+            print(#function + " => PList Target")
+        #endif
         return true
     }
 
