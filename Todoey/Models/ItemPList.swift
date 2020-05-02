@@ -8,6 +8,7 @@
 
 import Foundation
 
+// #TODO Refactor class: rename from ItemPList into PListItem
 class ItemPList: Codable {
     var title: String = ""
     var done:  Bool   = false

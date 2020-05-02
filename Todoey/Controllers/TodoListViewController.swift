@@ -27,8 +27,16 @@ class TodoListViewController: UITableViewController {
     
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     #elseif Realm
-    // #TODO Reimplement for target Realm: instead of ItemPList use Realm class
-    var itemArray = [ItemPList]()
+    let realm = try! Realm()
+    
+    // Compiler Error: Expected member name or constructor call after type name
+    //var items = Results<RealmItem>?
+    var itemArray = [RealmItem]()
+    var selectedCategory: RealmCategory? {
+        didSet {
+            loadItems()
+        }
+    }
     #else
     var itemArray = [ItemPList]()
     
@@ -62,8 +70,8 @@ class TodoListViewController: UITableViewController {
         #if CoreData
         return itemArray.count
         #elseif Realm
-        // #TODO Implement categories for target Realm
-        return 1
+        //return items?.count ?? 1
+        return itemArray.count
         #else
         // #TODO Implement categories for target PList
         return 0
@@ -78,6 +86,16 @@ class TodoListViewController: UITableViewController {
         cell.textLabel?.text = item.title
         cell.accessoryType = item.done ? .checkmark : .none
         #elseif Realm
+        let item = itemArray[indexPath.row]
+        //if let safeItem = items?[indexPath.row] {
+        //    cell.textLabel?.text = safeItem.title
+        //    cell.accessoryType   = safeItem.done ? .checkmark : .none
+        //} else {
+        //    cell.textLabel?.text = "No Items Added Yet"
+        //}
+        
+        cell.textLabel?.text = item.title
+        cell.accessoryType   = item.done ? .checkmark : .none
         #else
         #endif
         
@@ -95,10 +113,14 @@ class TodoListViewController: UITableViewController {
         //context.delete(itemArray[indexPath.row])
         //itemArray.remove(at: indexPath.row)
         #elseif Realm
+        // Compiler Error: Expected member name or constructor call after type name
+        //items?[indexPath.row].done = !items?[indexPath.row].done
+        
+        //itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         #else
-        #endif
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
-        saveItems()
+        #endif
+        ///saveItems()
         tableView.deselectRow(at: indexPath, animated: true)
     }
     
@@ -113,16 +135,32 @@ class TodoListViewController: UITableViewController {
             #if CoreData
             let newItem = Item(context: self.context)
             newItem.parentCategory = self.selectedCategory
-            #elseif Realm
-            // #TODO Reimplement for target Realm: instead of ItemPList use Realm class
-            let newItem = ItemPList()
-            #else
-            let newItem = ItemPList()
-            #endif
             newItem.title = textField.text!
             newItem.done = false
             self.itemArray.append(newItem)
             self.saveItems()
+            #elseif Realm
+            if let currentCategory = self.selectedCategory {
+                do {
+                    try self.realm.write {
+                        let newItem = RealmItem()
+                        newItem.title = textField.text!
+                        currentCategory.items.append(newItem)
+                        //self.saveItems(item: newItem)
+                    }
+                } catch {
+                    print("Error writing and adding Item to Realm: \(error)")
+                }
+            }
+            #else
+            let newItem = ItemPList()
+            newItem.title = textField.text!
+            newItem.done = false
+            self.itemArray.append(newItem)
+            self.saveItems()
+            #endif
+            
+            self.tableView.reloadData()
         }
         
         alert.addTextField { (tempAlertTextField) in
@@ -133,17 +171,31 @@ class TodoListViewController: UITableViewController {
         alert.addAction(action)
         
         present(alert, animated: true, completion: nil)
+        tableView.reloadData()
     }
     
+    #if CoreData
     func saveItems() {
-        #if CoreData
         do {
             try context.save()
         } catch {
             print("Error saving context and Creating item in DB: \(error)")
         }
-        #elseif Realm
-        #else
+        tableView.reloadData()
+    }
+    #elseif Realm
+    func saveItems(item: RealmItem) {
+        do {
+            try realm.write {
+                realm.add(item)
+            }
+        } catch {
+            print("Error writing and adding Item to Realm: \(error)")
+        }
+        tableView.reloadData()
+    }
+    #else
+    func saveItems() {
         let encoder = PropertyListEncoder()
         do {
             let data = try encoder.encode(itemArray)
@@ -151,10 +203,9 @@ class TodoListViewController: UITableViewController {
         } catch {
             print("Error encoding item array: \(error)")
         }
-        #endif
         tableView.reloadData()
     }
-    
+    #endif
     #if CoreData
     func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest(), and predicate: NSPredicate? = nil) {
         do {
@@ -174,6 +225,14 @@ class TodoListViewController: UITableViewController {
     }
     #elseif Realm
     func loadItems() {
+        // Compiler Error: Cannot assign value of type 'Results<RealmItem>?' to type '[RealmItem]'
+        //itemArray = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
+        let tempItems = realm.objects(RealmItem.self)
+        
+        if let safeFirstItem = tempItems.first {
+            itemArray.append(safeFirstItem)
+            print(#function + " => " + String(safeFirstItem.title))
+        }
         tableView.reloadData()
     }
     #else

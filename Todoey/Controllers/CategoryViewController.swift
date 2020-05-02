@@ -24,7 +24,12 @@ class CategoryViewController: UITableViewController {
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     #elseif Realm
     let realm = try! Realm()
+    
+    // Compiler Error: Expected member name or constructor call after type name
+    //var categories = Results<RealmCategory>!
+    //var categories = Results<RealmCategory>?
     var categoryArray = [RealmCategory]()
+    
     #else
     #endif
     
@@ -56,8 +61,8 @@ class CategoryViewController: UITableViewController {
         #if CoreData
         return categoryArray.count
         #elseif Realm
-        // #TODO Implement categories for target Realm
-        return 1
+        //return categories?.count ?? 1
+        return categoryArray.count
         #else
         // #TODO Implement categories for target PList
         return 0
@@ -71,6 +76,9 @@ class CategoryViewController: UITableViewController {
         let category = categoryArray[indexPath.row]
         cell.textLabel?.text = category.name
         #elseif Realm
+        let category = categoryArray[indexPath.row]
+        //cell.textLabel?.text = categories?[indexPath.row].name ?? "No Categories Added Yet"
+        cell.textLabel?.text = category.name
         #else
         #endif
 
@@ -158,7 +166,13 @@ class CategoryViewController: UITableViewController {
     }
     #elseif Realm
     func loadCategories() {
-        // #TODO Implement for target Realm
+        let tempCategories = realm.objects(RealmCategory.self)
+        
+        if let safeFirstCategory = tempCategories.first {
+            categoryArray.append(safeFirstCategory)
+            print(#function + " => " + String(safeFirstCategory.name))
+        }
+        tableView.reloadData()
     }
     #else
     #endif
@@ -168,6 +182,7 @@ class CategoryViewController: UITableViewController {
         let destinationVC = segue.destination as! TodoListViewController
         if let safeIndexPath = tableView.indexPathForSelectedRow {
             #if CoreData
+            //destinationVC.selectedCategory = categories?[safeIndexPath.row]
             destinationVC.selectedCategory = categoryArray[safeIndexPath.row]
             #elseif Realm
             #else
@@ -179,6 +194,7 @@ class CategoryViewController: UITableViewController {
         #if CoreData
         performSegue(withIdentifier: "goToItems", sender: self)
         #elseif Realm
+        performSegue(withIdentifier: "goToItems", sender: self)
         #else
         #endif
         tableView.deselectRow(at: indexPath, animated: true)
@@ -199,11 +215,20 @@ class CategoryViewController: UITableViewController {
             #elseif Realm
             let newCategory = RealmCategory()
             newCategory.name = textField.text!
+            
+            // Since category is a Results data type, which is an auto-updating
+            // container type in Realm, at this point we don't need to append
+            // the newCategory to an array like we did when using CoreData.
+            // However, since we have a Compiler Error: "Expected member name or
+            // constructor call after type name", for now we must append the
+            // newCategory to categoryArray.
             self.categoryArray.append(newCategory)
+            
             self.save(category: newCategory)
             #else
             #endif
             
+            self.tableView.reloadData()
         }
         
         alert.addTextField { (tempAlertTextField) in
@@ -214,5 +239,6 @@ class CategoryViewController: UITableViewController {
         alert.addAction(action)
         
         present(alert, animated: true, completion: nil)
+        tableView.reloadData()
     }
 }
