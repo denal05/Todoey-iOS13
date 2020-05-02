@@ -116,7 +116,24 @@ class TodoListViewController: UITableViewController {
         // Compiler Error: Expected member name or constructor call after type name
         //items?[indexPath.row].done = !items?[indexPath.row].done
         
-        //itemArray[indexPath.row].done = !itemArray[indexPath.row].done
+        //if let safeRealmResultsItem = items?[indexPath.row] {
+        //    do {
+        //        try realm.write {
+        //            safeRealmResultsItem.done = !safeRealmResultsItem.done
+        //        }
+        //    } catch {
+        //        print("Error writing and adding Item to Realm: \(error)")
+        //    }
+        //}
+        do {
+            try realm.write {
+                itemArray[indexPath.row].done = !itemArray[indexPath.row].done
+            }
+        } catch {
+            print("Error writing and adding Item to Realm: \(error)")
+        }
+        
+        tableView.reloadData()
         #else
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         #endif
