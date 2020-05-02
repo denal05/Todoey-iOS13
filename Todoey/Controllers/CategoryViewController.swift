@@ -165,13 +165,8 @@ class CategoryViewController: UITableViewController {
         tableView.reloadData()
     }
     #elseif Realm
-    func loadCategories() {
-        let tempCategories = realm.objects(RealmCategory.self)
-        
-        if let safeFirstCategory = tempCategories.first {
-            categoryArray.append(safeFirstCategory)
-            print(#function + " => " + String(safeFirstCategory.name))
-        }
+    func loadCategories() {        
+        syncResultsRealmCategoryAndCategoryArray()
         tableView.reloadData()
     }
     #else
@@ -185,6 +180,7 @@ class CategoryViewController: UITableViewController {
             //destinationVC.selectedCategory = categories?[safeIndexPath.row]
             destinationVC.selectedCategory = categoryArray[safeIndexPath.row]
             #elseif Realm
+            destinationVC.selectedCategory = categoryArray[safeIndexPath.row]
             #else
             #endif
         }
@@ -241,4 +237,11 @@ class CategoryViewController: UITableViewController {
         present(alert, animated: true, completion: nil)
         tableView.reloadData()
     }
+    
+    #if Realm
+    func syncResultsRealmCategoryAndCategoryArray() {
+        let resultsRealmCategory = realm.objects(RealmCategory.self)
+        categoryArray = resultsRealmCategory.reversed().reversed()
+    }
+    #endif
 }

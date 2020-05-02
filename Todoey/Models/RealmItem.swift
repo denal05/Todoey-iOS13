@@ -13,7 +13,8 @@ import RealmSwift
 
 class RealmItem: Object {
     @objc dynamic var title: String = ""
-    @objc dynamic var done:  Bool   = false
+    @objc dynamic var done: Bool   = false
+    @objc dynamic var dateCreated: Date?
     var parentCategory = LinkingObjects<RealmCategory>(fromType: RealmCategory.self, property: "items")
 }
 #endif

@@ -58,11 +58,17 @@ class TodoListViewController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        //searchBar.delegate = self
+        
+        #if CoreData
+        loadItems()
+        #elseif Realm
+        // loadItems() is already being called in declaration of selectedCategory
+        #else
         print("TodoListViewController::" + #function + " => ")
         print(dataFilePath)
-        
-        //searchBar.delegate = self
+        loadItems()
+        #endif
     }
     
     //MARK: - Tableview Datasource Methods
@@ -71,6 +77,8 @@ class TodoListViewController: UITableViewController {
         return itemArray.count
         #elseif Realm
         //return items?.count ?? 1
+        itemArray = [RealmItem]()
+        syncResultsRealmItemAndItemArray()
         return itemArray.count
         #else
         // #TODO Implement categories for target PList
@@ -86,6 +94,8 @@ class TodoListViewController: UITableViewController {
         cell.textLabel?.text = item.title
         cell.accessoryType = item.done ? .checkmark : .none
         #elseif Realm
+        itemArray = [RealmItem]()
+        syncResultsRealmItemAndItemArray()
         let item = itemArray[indexPath.row]
         //if let safeItem = items?[indexPath.row] {
         //    cell.textLabel?.text = safeItem.title
@@ -94,6 +104,9 @@ class TodoListViewController: UITableViewController {
         //    cell.textLabel?.text = "No Items Added Yet"
         //}
         
+        if let tempItemParentCategoryFirstName = item.parentCategory.first?.name {
+            cell.textLabel?.text = item.title + ": " + tempItemParentCategoryFirstName
+        }
         cell.textLabel?.text = item.title
         cell.accessoryType   = item.done ? .checkmark : .none
         #else
@@ -125,6 +138,7 @@ class TodoListViewController: UITableViewController {
         //        print("Error writing and adding Item to Realm: \(error)")
         //    }
         //}
+        syncResultsRealmItemAndItemArray()
         do {
             try realm.write {
                 itemArray[indexPath.row].done = !itemArray[indexPath.row].done
@@ -161,17 +175,23 @@ class TodoListViewController: UITableViewController {
             self.saveItems()
             #elseif Realm
             if let currentCategory = self.selectedCategory {
+                print("TodoListViewController::" + #function + " => selectedCategory is " + currentCategory.name)
                 do {
                     try self.realm.write {
                         let newItem = RealmItem()
                         newItem.title = textField.text!
+                        newItem.dateCreated = Date()
                         currentCategory.items.append(newItem)
                         //self.saveItems(item: newItem)
                     }
                 } catch {
                     print("Error writing and adding Item to Realm: \(error)")
                 }
+            } else {
+                print("TodoListViewController::" + #function + " => self.selectedCategory is null, so cannot realm.write the newItem!")
             }
+            
+            self.syncResultsRealmItemAndItemArray()
             #else
             let newItem = ItemPList()
             newItem.title = textField.text!
@@ -205,6 +225,7 @@ class TodoListViewController: UITableViewController {
     }
     #elseif Realm
     func saveItems(item: RealmItem) {
+        syncResultsRealmItemAndItemArray()
         do {
             try realm.write {
                 realm.add(item)
@@ -226,6 +247,7 @@ class TodoListViewController: UITableViewController {
         tableView.reloadData()
     }
     #endif
+    
     #if CoreData
     func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest(), and predicate: NSPredicate? = nil) {
         do {
@@ -247,12 +269,20 @@ class TodoListViewController: UITableViewController {
     func loadItems() {
         // Compiler Error: Cannot assign value of type 'Results<RealmItem>?' to type '[RealmItem]'
         //itemArray = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
-        let tempItems = realm.objects(RealmItem.self)
         
-        if let safeFirstItem = tempItems.first {
-            itemArray.append(safeFirstItem)
-            print(#function + " => " + String(safeFirstItem.title))
+        if let safeSelectedCategory = selectedCategory {
+            print(#function + " => selectedCategory is " + safeSelectedCategory.name)
+        } else {
+            print("####### " + #function + " => selectedCategory is nil!")
         }
+        
+        if let resultsRealmItem = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true) {
+            itemArray = resultsRealmItem.reversed().reversed()
+        } else {
+            print("####### " + #function + " => selectedCategory is nil, therefore calling syncResultsRealmItemAndItemArray()")
+            syncResultsRealmItemAndItemArray()
+        }
+        
         tableView.reloadData()
     }
     #else
@@ -268,6 +298,13 @@ class TodoListViewController: UITableViewController {
         tableView.reloadData()
     }
     #endif
+    
+    #if Realm
+    func syncResultsRealmItemAndItemArray() {
+        let resultsRealmItem = realm.objects(RealmItem.self)
+        itemArray = resultsRealmItem.reversed().reversed()
+    }
+    #endif
 }
 
 //MARK: - Search Bar Methods
@@ -281,6 +318,11 @@ extension TodoListViewController: UISearchBarDelegate {
         
         loadItems(with: request, and: predicate)
         #elseif Realm
+        //items = items?.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "title", ascending: true)
+        let resultsRealmItem = realm.objects(RealmItem.self)
+        let filteredSortedResultsRealmItem = resultsRealmItem.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "dateCreated", ascending: false)
+        itemArray = filteredSortedResultsRealmItem.reversed().reversed()
+        tableView.reloadData()
         #else
         #endif
         
