@@ -128,6 +128,9 @@ class TodoListViewController: UITableViewController {
         do {
             try realm.write {
                 itemArray[indexPath.row].done = !itemArray[indexPath.row].done
+                
+                // An example of Deleting in Realm:
+                //realm.delete(itemArray[indexPath.row])
             }
         } catch {
             print("Error writing and adding Item to Realm: \(error)")
