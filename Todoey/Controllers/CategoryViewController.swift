@@ -8,7 +8,11 @@
 //
 
 import UIKit
+#if CoreData
 import CoreData
+#elseif Realm
+import RealmSwift
+#endif
 
 // #TODO Refactor class from CategoryViewController into CategoriesViewController
 // Main.storyboard > TableView > ID > Custom Class: CategoriesViewController
@@ -18,6 +22,9 @@ class CategoryViewController: UITableViewController {
     // Surround class name Category with backticks to avoid confusion with Opaque Pointer called Category
     var categoryArray = [`Category`]()
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    #elseif Realm
+    let realm = try! Realm()
+    var categoryArray = [RealmCategory]()
     #else
     #endif
     
@@ -30,7 +37,13 @@ class CategoryViewController: UITableViewController {
         // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
         // self.navigationItem.rightBarButtonItem = self.editButtonItem
         
+        #if CoreData
         loadCategories()
+        #elseif Realm
+        loadCategories()
+        #else
+        //loadCategories()
+        #endif
     }
 
     // MARK: - Table view data source methods
@@ -110,30 +123,45 @@ class CategoryViewController: UITableViewController {
     */
     
     // MARK: - Data manipulation methods
+    #if CoreData
     func saveCategories() {
-        #if CoreData
         do {
             try context.save()
         } catch {
             print("Error saving context and Creating category in DB: \(error)")
         }
-        #else
-        #endif
         tableView.reloadData()
     }
+    #elseif Realm
+    func save(category: RealmCategory) {
+        do {
+            try realm.write {
+                realm.add(category)
+            }
+        } catch {
+            print("Error writing and adding Category to Realm: \(error)")
+        }
+        tableView.reloadData()
+    }
+    #else
+    #endif
     
+    #if CoreData
     func loadCategories(with request: NSFetchRequest<`Category`> = `Category`.fetchRequest()) {
-        #if CoreData
         do {
             categoryArray = try context.fetch(request)
         } catch {
             print("Error fetching from context and Reading category from DB: \(error)")
         }
-        #else
-        #endif
         
         tableView.reloadData()
     }
+    #elseif Realm
+    func loadCategories() {
+        // #TODO Implement for target Realm
+    }
+    #else
+    #endif
     
     // MARK: - Table view delegate methods
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -150,6 +178,7 @@ class CategoryViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         #if CoreData
         performSegue(withIdentifier: "goToItems", sender: self)
+        #elseif Realm
         #else
         #endif
         tableView.deselectRow(at: indexPath, animated: true)
@@ -166,10 +195,15 @@ class CategoryViewController: UITableViewController {
             let newCategory = `Category`(context: self.context)
             newCategory.name = textField.text!
             self.categoryArray.append(newCategory)
+            self.saveCategories()
+            #elseif Realm
+            let newCategory = RealmCategory()
+            newCategory.name = textField.text!
+            self.categoryArray.append(newCategory)
+            self.save(category: newCategory)
             #else
             #endif
             
-            self.saveCategories()
         }
         
         alert.addTextField { (tempAlertTextField) in

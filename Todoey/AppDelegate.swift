@@ -8,7 +8,11 @@
 //
 
 import UIKit
+#if CoreData
 import CoreData
+#elseif Realm
+import RealmSwift
+#endif
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -19,11 +23,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         //print(#function + " => " + NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).last! as String)
         #if CoreData
-            print(#function + " => CoreData Target")
+        print(#function + " => CoreData Target")
+        
         #elseif Realm
-            print(#function + " => Realm Target")
+        print(#function + " => Realm Target")
+        print(#function + " => \(Realm.Configuration.defaultConfiguration.fileURL)")
+        
+        do {
+            let realm = try Realm()
+        } catch {
+            print("Error initializing a new Realm(): \(error)")
+        }
+        
         #else
-            print(#function + " => PList Target")
+        print(#function + " => PList Target")
         #endif
         return true
     }
@@ -48,11 +61,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationWillTerminate(_ application: UIApplication) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
+        #if CoreData
         self.saveContext()
+        #elseif Realm
+        #else
+        #endif
     }
 
     // MARK: - Core Data stack
-
+    #if CoreData
     lazy var persistentContainer: NSPersistentContainer = {
         /*
          The persistent container for the application. This implementation
@@ -79,9 +96,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         })
         return container
     }()
+    #elseif Realm
+    #else
+    #endif
 
     // MARK: - Core Data Saving support
-
+    #if CoreData
     func saveContext () {
         let context = persistentContainer.viewContext
         if context.hasChanges {
@@ -95,4 +115,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             }
         }
     }
+    #elseif Realm
+    #else
+    #endif
+
 }

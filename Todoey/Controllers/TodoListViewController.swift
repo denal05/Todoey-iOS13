@@ -8,9 +8,14 @@
 //
 
 import UIKit
+#if CoreData
 import CoreData
+#elseif Realm
+import RealmSwift
+#endif
 
 // #TODO Refactor class from TodoListViewController into ItemsViewController
+// Main.storyboard > TableView > ID > Custom Class: ItemsViewController
 class TodoListViewController: UITableViewController {
     #if CoreData
     var itemArray = [Item]()
@@ -21,6 +26,9 @@ class TodoListViewController: UITableViewController {
     }
     
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    #elseif Realm
+    // #TODO Reimplement for target Realm: instead of ItemPList use Realm class
+    var itemArray = [ItemPList]()
     #else
     var itemArray = [ItemPList]()
     
@@ -51,15 +59,27 @@ class TodoListViewController: UITableViewController {
     
     //MARK: - Tableview Datasource Methods
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        #if CoreData
         return itemArray.count
+        #elseif Realm
+        // #TODO Implement categories for target Realm
+        return 1
+        #else
+        // #TODO Implement categories for target PList
+        return 0
+        #endif
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "ItemCell", for: indexPath)
         
+        #if CoreData
         let item = itemArray[indexPath.row]
         cell.textLabel?.text = item.title
         cell.accessoryType = item.done ? .checkmark : .none
+        #elseif Realm
+        #else
+        #endif
         
         return cell
     }
@@ -74,6 +94,7 @@ class TodoListViewController: UITableViewController {
         // An example of Deleting an Item from DB and removing it from the itemArray:
         //context.delete(itemArray[indexPath.row])
         //itemArray.remove(at: indexPath.row)
+        #elseif Realm
         #else
         #endif
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
@@ -92,6 +113,9 @@ class TodoListViewController: UITableViewController {
             #if CoreData
             let newItem = Item(context: self.context)
             newItem.parentCategory = self.selectedCategory
+            #elseif Realm
+            // #TODO Reimplement for target Realm: instead of ItemPList use Realm class
+            let newItem = ItemPList()
             #else
             let newItem = ItemPList()
             #endif
@@ -118,6 +142,7 @@ class TodoListViewController: UITableViewController {
         } catch {
             print("Error saving context and Creating item in DB: \(error)")
         }
+        #elseif Realm
         #else
         let encoder = PropertyListEncoder()
         do {
@@ -130,22 +155,29 @@ class TodoListViewController: UITableViewController {
         tableView.reloadData()
     }
     
+    #if CoreData
     func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest(), and predicate: NSPredicate? = nil) {
-        #if CoreData
-        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHED %@", selectedCategory!.name!)
-        
-        if let additionalPredicate = predicate {
-            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, additionalPredicate])
-        } else {
-            request.predicate = categoryPredicate
-        }
-
         do {
+            let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHED %@", selectedCategory!.name!)
+            
+            if let additionalPredicate = predicate {
+                request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, additionalPredicate])
+            } else {
+                request.predicate = categoryPredicate
+            }
+        
             itemArray = try context.fetch(request)
         } catch {
             print("Error fetching from context and Reading item from DB: \(error)")
         }
-        #else
+        tableView.reloadData()
+    }
+    #elseif Realm
+    func loadItems() {
+        tableView.reloadData()
+    }
+    #else
+    func loadItems() {
         if let safeData = try? Data(contentsOf: dataFilePath!) {
             let decoder = PropertyListDecoder()
             do {
@@ -154,10 +186,9 @@ class TodoListViewController: UITableViewController {
                 print("Error decoding item array: \(error)")
             }
         }
-        #endif
-        
         tableView.reloadData()
     }
+    #endif
 }
 
 //MARK: - Search Bar Methods
@@ -170,6 +201,7 @@ extension TodoListViewController: UISearchBarDelegate {
         request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
         
         loadItems(with: request, and: predicate)
+        #elseif Realm
         #else
         #endif
         
