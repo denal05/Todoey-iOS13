@@ -24,11 +24,13 @@ class CategoryViewController: UITableViewController {
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     #elseif Realm
     let realm = try! Realm()
+    let results = try! Realm().objects(RealmCategory.self).sorted(byKeyPath: "name")
+    var notificationToken: NotificationToken?
     
     // Compiler Error: Expected member name or constructor call after type name
     //var categories = Results<RealmCategory>!
     //var categories = Results<RealmCategory>?
-    var categoryArray = [RealmCategory]()
+//    var categoryArray = [RealmCategory]()
     
     #else
     #endif
@@ -45,7 +47,26 @@ class CategoryViewController: UITableViewController {
         #if CoreData
         loadCategories()
         #elseif Realm
-        loadCategories()
+//        loadCategories()
+        
+        // Set results notification block
+        self.notificationToken = results.observe { (changes: RealmCollectionChange) in
+            switch changes {
+            case .initial:
+                // Results are now populated and can be accessed without blocking the UI
+                self.tableView.reloadData()
+            case .update(_, let deletions, let insertions, let modifications):
+                // Query results have changed, so apply them to the TableView
+                self.tableView.beginUpdates()
+                self.tableView.insertRows(at: insertions.map { IndexPath(row: $0, section: 0) }, with: .automatic)
+                self.tableView.deleteRows(at: deletions.map { IndexPath(row: $0, section: 0) }, with: .automatic)
+                self.tableView.reloadRows(at: modifications.map { IndexPath(row: $0, section: 0) }, with: .automatic)
+                self.tableView.endUpdates()
+            case .error(let err):
+                // An error occurred while opening the Realm file on the background worker thread
+                fatalError("\(err)")
+            }
+        }
         #else
         //loadCategories()
         #endif
@@ -61,8 +82,9 @@ class CategoryViewController: UITableViewController {
         #if CoreData
         return categoryArray.count
         #elseif Realm
+//        return categoryArray.count
         //return categories?.count ?? 1
-        return categoryArray.count
+        return results.count
         #else
         // #TODO Implement categories for target PList
         return 0
@@ -76,8 +98,9 @@ class CategoryViewController: UITableViewController {
         let category = categoryArray[indexPath.row]
         cell.textLabel?.text = category.name
         #elseif Realm
-        let category = categoryArray[indexPath.row]
         //cell.textLabel?.text = categories?[indexPath.row].name ?? "No Categories Added Yet"
+//        let category = categoryArray[indexPath.row]
+        let category = results[indexPath.row]
         cell.textLabel?.text = category.name
         #else
         #endif
@@ -141,16 +164,16 @@ class CategoryViewController: UITableViewController {
         tableView.reloadData()
     }
     #elseif Realm
-    func save(category: RealmCategory) {
-        do {
-            try realm.write {
-                realm.add(category)
-            }
-        } catch {
-            print("Error writing and adding Category to Realm: \(error)")
-        }
-        tableView.reloadData()
-    }
+//    func save(category: RealmCategory) {
+//        do {
+//            try realm.write {
+//                realm.add(category)
+//            }
+//        } catch {
+//            print("Error writing and adding Category to Realm: \(error)")
+//        }
+//        tableView.reloadData()
+//    }
     #else
     #endif
     
@@ -165,10 +188,10 @@ class CategoryViewController: UITableViewController {
         tableView.reloadData()
     }
     #elseif Realm
-    func loadCategories() {        
-        syncResultsRealmCategoryAndCategoryArray()
-        tableView.reloadData()
-    }
+//    func loadCategories() {
+//        syncResultsRealmCategoryAndCategoryArray()
+//        tableView.reloadData()
+//    }
     #else
     #endif
     
@@ -180,7 +203,9 @@ class CategoryViewController: UITableViewController {
             //destinationVC.selectedCategory = categories?[safeIndexPath.row]
             destinationVC.selectedCategory = categoryArray[safeIndexPath.row]
             #elseif Realm
-            destinationVC.selectedCategory = categoryArray[safeIndexPath.row]
+//            destinationVC.selectedCategory = categoryArray[safeIndexPath.row]
+            let category = results[safeIndexPath.row]
+            destinationVC.selectedCategory = category
             #else
             #endif
         }
@@ -215,12 +240,25 @@ class CategoryViewController: UITableViewController {
             // Since category is a Results data type, which is an auto-updating
             // container type in Realm, at this point we don't need to append
             // the newCategory to an array like we did when using CoreData.
+            /*
             // However, since we have a Compiler Error: "Expected member name or
             // constructor call after type name", for now we must append the
             // newCategory to categoryArray.
             self.categoryArray.append(newCategory)
+            */
+//            self.save(category: newCategory)
             
-            self.save(category: newCategory)
+            do {
+                let newCategory = RealmCategory()
+                newCategory.name = textField.text!
+
+                self.realm.beginWrite()
+             /* self.realm.create(RealmCategory.self, value: [textField.text!, Date(), ]) */
+                self.realm.add(newCategory)
+                try! self.realm.commitWrite()
+            } catch {
+                print("Error writing and adding Item to Realm: \(error)")
+            }
             #else
             #endif
             
@@ -239,9 +277,9 @@ class CategoryViewController: UITableViewController {
     }
     
     #if Realm
-    func syncResultsRealmCategoryAndCategoryArray() {
-        let resultsRealmCategory = realm.objects(RealmCategory.self)
-        categoryArray = resultsRealmCategory.reversed().reversed()
-    }
+//    func syncResultsRealmCategoryAndCategoryArray() {
+//        let resultsRealmCategory = realm.objects(RealmCategory.self)
+//        categoryArray = resultsRealmCategory.reversed().reversed()
+//    }
     #endif
 }
