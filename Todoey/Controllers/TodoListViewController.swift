@@ -28,7 +28,9 @@ class TodoListViewController: UITableViewController {
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     #elseif Realm
     let realm = try! Realm()
-    let results = try! Realm().objects(RealmItem.self).sorted(byKeyPath: "dateCreated")
+    var results = try! Realm().objects(RealmItem.self).sorted(byKeyPath: "dateCreated")
+    var resultsRealmItemOptional: Results<RealmItem>?
+    var items: List<RealmItem>?
     var notificationToken: NotificationToken?
     
     // Compiler Error: Expected member name or constructor call after type name
@@ -38,6 +40,9 @@ class TodoListViewController: UITableViewController {
     var selectedCategory: RealmCategory? {
         didSet {
 //            loadItems()
+            resultsRealmItemOptional = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
+            results = resultsRealmItemOptional!
+            tableView.reloadData()
         }
     }
     #else
