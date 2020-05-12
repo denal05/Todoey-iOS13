@@ -1,5 +1,5 @@
 //
-//  ViewController.swift
+//  ItemsViewController.swift
 //  Todoey
 //
 //  Originally created by Philipp Muellauer on 02/12/2019.
@@ -14,9 +14,7 @@ import CoreData
 import RealmSwift
 #endif
 
-// #TODO Refactor class from TodoListViewController into ItemsViewController
-// Main.storyboard > TableView > ID > Custom Class: ItemsViewController
-class TodoListViewController: UITableViewController {
+class ItemsViewController: UITableViewController {
     #if CoreData
     var itemArray = [Item]()
     var selectedCategory: `Category`? {
@@ -36,17 +34,15 @@ class TodoListViewController: UITableViewController {
     // Compiler Error: Expected member name or constructor call after type name
     //var items = Results<RealmItem>?
 
-//    var itemArray = [RealmItem]()
     var selectedCategory: RealmCategory? {
         didSet {
-//            loadItems()
             resultsRealmItemOptional = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
             results = resultsRealmItemOptional!
             tableView.reloadData()
         }
     }
     #else
-    var itemArray = [ItemPList]()
+    var itemArray = [PListItem]()
     #endif
     
     //var userDefaults = UserDefaults.standard
@@ -59,7 +55,7 @@ class TodoListViewController: UITableViewController {
         #if CoreData
         loadItems()
         #elseif Realm
-        // loadItems() is already being called in declaration of selectedCategory
+        // loadItems() for Realm was previously being called in declaration of selectedCategory
         
         // Set results notification block
         self.notificationToken = results.observe { (changes: RealmCollectionChange) in
@@ -92,9 +88,6 @@ class TodoListViewController: UITableViewController {
         return itemArray.count
         #elseif Realm
         return results.count
-//        itemArray = [RealmItem]()
-//        syncResultsRealmItemAndItemArray()
-//        return itemArray.count
         #else
         // #TODO Implement categories for target PList
         return 0
@@ -109,28 +102,12 @@ class TodoListViewController: UITableViewController {
         cell.textLabel?.text = item.title
         cell.accessoryType = item.done ? .checkmark : .none
         #elseif Realm
-//        itemArray = [RealmItem]()
-//        syncResultsRealmItemAndItemArray()
-//        let item = itemArray[indexPath.row]
-        
-        let item = results[indexPath.row]
-        
-        //if let safeItem = items?[indexPath.row] {
-        //    cell.textLabel?.text = safeItem.title
-        //    cell.accessoryType   = safeItem.done ? .checkmark : .none
-        //} else {
-        //    cell.textLabel?.text = "No Items Added Yet"
-        //}
-        
-        // #debug begin
-        if let tempItemParentCategoryFirstName = item.parentCategory.first?.name {
-            cell.textLabel?.text = item.title + ": " + tempItemParentCategoryFirstName
+        if let safeItem = resultsRealmItemOptional?[indexPath.row] {
+            cell.textLabel?.text = safeItem.title
+            cell.accessoryType   = safeItem.done ? .checkmark : .none
         } else {
-            cell.textLabel?.text = item.title
+            cell.textLabel?.text = "No Items Added Yet"
         }
-        // #debug end
-        
-        cell.accessoryType   = item.done ? .checkmark : .none
         #else
         #endif
         
@@ -151,19 +128,8 @@ class TodoListViewController: UITableViewController {
         // Compiler Error: Expected member name or constructor call after type name
         //items?[indexPath.row].done = !items?[indexPath.row].done
         
-        //if let safeRealmResultsItem = items?[indexPath.row] {
-        //    do {
-        //        try realm.write {
-        //            safeRealmResultsItem.done = !safeRealmResultsItem.done
-        //        }
-        //    } catch {
-        //        print("Error writing and adding Item to Realm: \(error)")
-        //    }
-        //}
-//        syncResultsRealmItemAndItemArray()
         do {
             try realm.write {
-//                itemArray[indexPath.row].done = !itemArray[indexPath.row].done
                 let item = results[indexPath.row]
                 item.done = !item.done
                 
@@ -178,7 +144,6 @@ class TodoListViewController: UITableViewController {
         #else
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         #endif
-        ///saveItems()
         tableView.deselectRow(at: indexPath, animated: true)
     }
     
@@ -216,10 +181,9 @@ class TodoListViewController: UITableViewController {
             } else {
                 print("TodoListViewController::" + #function + " => self.selectedCategory is null, so cannot realm.write the newItem!")
             }
-            
-//            self.syncResultsRealmItemAndItemArray()
+
             #else
-            let newItem = ItemPList()
+            let newItem = PListItem()
             newItem.title = textField.text!
             newItem.done = false
             self.itemArray.append(newItem)
@@ -250,17 +214,7 @@ class TodoListViewController: UITableViewController {
         tableView.reloadData()
     }
     #elseif Realm
-//    func saveItems(item: RealmItem) {
-////        syncResultsRealmItemAndItemArray()
-//        do {
-//            try realm.write {
-//                realm.add(item)
-//            }
-//        } catch {
-//            print("Error writing and adding Item to Realm: \(error)")
-//        }
-//        tableView.reloadData()
-//    }
+    // No need for saveItem() in Realm Swift 4.4.1+
     #else
     func saveItems() {
         let encoder = PropertyListEncoder()
@@ -292,31 +246,13 @@ class TodoListViewController: UITableViewController {
         tableView.reloadData()
     }
     #elseif Realm
-//    func loadItems() {
-//        // Compiler Error: Cannot assign value of type 'Results<RealmItem>?' to type '[RealmItem]'
-//        //itemArray = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
-//
-//        if let safeSelectedCategory = selectedCategory {
-//            print(#function + " => selectedCategory is " + safeSelectedCategory.name)
-//        } else {
-//            print("####### " + #function + " => selectedCategory is nil!")
-//        }
-//
-//        if let resultsRealmItem = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true) {
-////            itemArray = resultsRealmItem.reversed().reversed()
-//        } else {
-//            print("####### " + #function + " => selectedCategory is nil")
-////            syncResultsRealmItemAndItemArray()
-//        }
-//
-//        tableView.reloadData()
-//    }
+    // No need for loadItems() in Realm Swift 4.4.1+
     #else
     func loadItems() {
         if let safeData = try? Data(contentsOf: dataFilePath!) {
             let decoder = PropertyListDecoder()
             do {
-                itemArray = try decoder.decode([ItemPList].self, from: safeData)
+                itemArray = try decoder.decode([PListItem].self, from: safeData)
             } catch {
                 print("Error decoding item array: \(error)")
             }
@@ -324,17 +260,10 @@ class TodoListViewController: UITableViewController {
         tableView.reloadData()
     }
     #endif
-    
-    #if Realm
-//    func syncResultsRealmItemAndItemArray() {
-//        let resultsRealmItem = realm.objects(RealmItem.self)
-//        itemArray = resultsRealmItem.reversed().reversed()
-//    }
-    #endif
 }
 
 //MARK: - Search Bar Methods
-extension TodoListViewController: UISearchBarDelegate {
+extension ItemsViewController: UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         #if CoreData
         let request: NSFetchRequest<Item> = Item.fetchRequest()
@@ -344,6 +273,7 @@ extension TodoListViewController: UISearchBarDelegate {
         
         loadItems(with: request, and: predicate)
         #elseif Realm
+        // #TODO Fix search in Realm Swift 4.4.1
         //items = items?.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "title", ascending: true)
         let resultsRealmItem = realm.objects(RealmItem.self)
         let filteredSortedResultsRealmItem = resultsRealmItem.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "dateCreated", ascending: false)
@@ -357,7 +287,7 @@ extension TodoListViewController: UISearchBarDelegate {
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         if searchBar.text?.count == 0 {
-//            loadItems()
+            //loadItems()
             
             DispatchQueue.main.async {
                 searchBar.resignFirstResponder()

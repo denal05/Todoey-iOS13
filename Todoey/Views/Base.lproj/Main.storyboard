@@ -9,7 +9,7 @@
         <!--Items-->
         <scene sceneID="cay-Su-O6P">
             <objects>
-                <tableViewController id="Ch6-4c-Ibl" customClass="TodoListViewController" customModule="Todoey_CoreData" customModuleProvider="target" sceneMemberID="viewController">
+                <tableViewController id="Ch6-4c-Ibl" customClass="ItemsViewController" customModule="Todoey_CoreData" customModuleProvider="target" sceneMemberID="viewController">
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="28" sectionFooterHeight="28" id="UmH-fb-XS5">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -76,7 +76,7 @@
         <!--Todoey-->
         <scene sceneID="Lux-4f-ArH">
             <objects>
-                <tableViewController id="pRR-bR-sfH" customClass="CategoryViewController" customModule="Todoey_CoreData" customModuleProvider="target" sceneMemberID="viewController">
+                <tableViewController id="pRR-bR-sfH" customClass="CategoriesViewController" customModule="Todoey_CoreData" customModuleProvider="target" sceneMemberID="viewController">
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="28" sectionFooterHeight="28" id="OTE-Yk-7qF">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>

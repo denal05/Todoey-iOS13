@@ -1,5 +1,5 @@
 //
-//  CategoryViewController.swift
+//  CategoriesViewController.swift
 //  Todoey
 //
 //  Originally created by Angela Yu on 01/12/2017.
@@ -14,9 +14,7 @@ import CoreData
 import RealmSwift
 #endif
 
-// #TODO Refactor class from CategoryViewController into CategoriesViewController
-// Main.storyboard > TableView > ID > Custom Class: CategoriesViewController
-class CategoryViewController: UITableViewController {
+class CategoriesViewController: UITableViewController {
 
     #if CoreData
     // Surround class name Category with backticks to avoid confusion with Opaque Pointer called Category
@@ -197,7 +195,7 @@ class CategoryViewController: UITableViewController {
     
     // MARK: - Table view delegate methods
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        let destinationVC = segue.destination as! TodoListViewController
+        let destinationVC = segue.destination as! ItemsViewController
         if let safeIndexPath = tableView.indexPathForSelectedRow {
             #if CoreData
             //destinationVC.selectedCategory = categories?[safeIndexPath.row]

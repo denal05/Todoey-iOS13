@@ -35,7 +35,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             print("Error initializing a new Realm(): \(error)")
         }
         
-        #else
+        #else // PList
         print(#function + " => PList Target")
         #endif
         return true

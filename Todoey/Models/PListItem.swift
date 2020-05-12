@@ -1,5 +1,5 @@
 //
-//  ItemPList.swift
+//  PListItem.swift
 //  Todoey
 //
 //  Created by Denis Aleksandrov on 4/27/20.
@@ -8,8 +8,7 @@
 
 import Foundation
 
-// #TODO Refactor class: rename from ItemPList into PListItem
-class ItemPList: Codable {
+class PListItem: Codable {
     var title: String = ""
     var done:  Bool   = false
 }
