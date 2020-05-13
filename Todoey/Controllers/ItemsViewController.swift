@@ -27,7 +27,6 @@ class ItemsViewController: UITableViewController {
     #elseif Realm
     let realm = try! Realm()
     var results = try! Realm().objects(RealmItem.self).sorted(byKeyPath: "dateCreated")
-    var resultsRealmItemOptional: Results<RealmItem>?
     var items: List<RealmItem>?
     var notificationToken: NotificationToken?
     
@@ -36,8 +35,8 @@ class ItemsViewController: UITableViewController {
 
     var selectedCategory: RealmCategory? {
         didSet {
-            resultsRealmItemOptional = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
-            results = resultsRealmItemOptional!
+            // loadItems() was previously called here, but in Realm Swift 4.4.1+ it's replaced with results.observe
+            results = selectedCategory!.items.sorted(byKeyPath: "title", ascending: true)
             tableView.reloadData()
         }
     }
@@ -55,8 +54,6 @@ class ItemsViewController: UITableViewController {
         #if CoreData
         loadItems()
         #elseif Realm
-        // loadItems() for Realm was previously being called in declaration of selectedCategory
-        
         // Set results notification block
         self.notificationToken = results.observe { (changes: RealmCollectionChange) in
             switch changes {
@@ -102,12 +99,9 @@ class ItemsViewController: UITableViewController {
         cell.textLabel?.text = item.title
         cell.accessoryType = item.done ? .checkmark : .none
         #elseif Realm
-        if let safeItem = resultsRealmItemOptional?[indexPath.row] {
-            cell.textLabel?.text = safeItem.title
-            cell.accessoryType   = safeItem.done ? .checkmark : .none
-        } else {
-            cell.textLabel?.text = "No Items Added Yet"
-        }
+        let item = results[indexPath.row]
+        cell.textLabel?.text = item.title
+        cell.accessoryType   = item.done ? .checkmark : .none
         #else
         #endif
         
@@ -246,7 +240,7 @@ class ItemsViewController: UITableViewController {
         tableView.reloadData()
     }
     #elseif Realm
-    // No need for loadItems() in Realm Swift 4.4.1+
+    // loadItems() in Realm Swift 4.4.1+ is replaced with results.observe
     #else
     func loadItems() {
         if let safeData = try? Data(contentsOf: dataFilePath!) {
@@ -273,11 +267,7 @@ extension ItemsViewController: UISearchBarDelegate {
         
         loadItems(with: request, and: predicate)
         #elseif Realm
-        // #TODO Fix search in Realm Swift 4.4.1
-        //items = items?.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "title", ascending: true)
-        let resultsRealmItem = realm.objects(RealmItem.self)
-        let filteredSortedResultsRealmItem = resultsRealmItem.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "dateCreated", ascending: false)
-//        itemArray = filteredSortedResultsRealmItem.reversed().reversed()
+        results = selectedCategory!.items.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "dateCreated", ascending: false)
         tableView.reloadData()
         #else
         #endif
@@ -287,8 +277,8 @@ extension ItemsViewController: UISearchBarDelegate {
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         if searchBar.text?.count == 0 {
-            //loadItems()
-            
+            results = selectedCategory!.items.sorted(byKeyPath: "title", ascending: true)
+            tableView.reloadData()
             DispatchQueue.main.async {
                 searchBar.resignFirstResponder()
             }
