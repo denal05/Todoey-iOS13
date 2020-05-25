@@ -27,7 +27,6 @@ class ItemsViewController: UITableViewController {
     #elseif Realm
     let realm = try! Realm()
     var results = try! Realm().objects(RealmItem.self).sorted(byKeyPath: "dateCreated")
-    var items: List<RealmItem>?
     var notificationToken: NotificationToken?
     
     // Compiler Error: Expected member name or constructor call after type name
@@ -54,32 +53,16 @@ class ItemsViewController: UITableViewController {
         #if CoreData
         loadItems()
         #elseif Realm
-        // Set results notification block
-        self.notificationToken = results.observe { (changes: RealmCollectionChange) in
-            switch changes {
-            case .initial:
-                // Results are now populated and can be accessed without blocking the UI
-                self.tableView.reloadData()
-            case .update(_, let deletions, let insertions, let modifications):
-                // Query results have changed, so apply them to the TableView
-                self.tableView.beginUpdates()
-                self.tableView.insertRows(at: insertions.map { IndexPath(row: $0, section: 0) }, with: .automatic)
-                self.tableView.deleteRows(at: deletions.map { IndexPath(row: $0, section: 0) }, with: .automatic)
-                self.tableView.reloadRows(at: modifications.map { IndexPath(row: $0, section: 0) }, with: .automatic)
-                self.tableView.endUpdates()
-            case .error(let err):
-                // An error occurred while opening the Realm file on the background worker thread
-                fatalError("\(err)")
-            }
-        }
+        observeRealmResultsAndUpdateTableView()
         #else
-        print("TodoListViewController::" + #function + " => ")
+        print("ItemsViewController::" + #function + " => ")
         print(dataFilePath)
         loadItems()
         #endif
     }
     
     //MARK: - Tableview Datasource Methods
+    
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         #if CoreData
         return itemArray.count
@@ -158,7 +141,7 @@ class ItemsViewController: UITableViewController {
             self.saveItems()
             #elseif Realm
             if let currentCategory = self.selectedCategory {
-                print("TodoListViewController::" + #function + " => selectedCategory is " + currentCategory.name)
+                print("ItemsViewController::" + #function + " => selectedCategory is " + currentCategory.name)
                 do {
                     let newItem = RealmItem()
                     newItem.title = textField.text!
@@ -169,11 +152,16 @@ class ItemsViewController: UITableViewController {
                  /* self.realm.create(RealmItem.self, value: [textField.text!, Date(), ]) */
                     self.realm.add(newItem)
                     try! self.realm.commitWrite()
+                    self.observeRealmResultsAndUpdateTableView()
+                    
+//                    try! self.realm.write {
+//                        self.realm.add(newItem)
+//                    }
                 } catch {
                     print("Error writing and adding Item to Realm: \(error)")
                 }
             } else {
-                print("TodoListViewController::" + #function + " => self.selectedCategory is null, so cannot realm.write the newItem!")
+                print("ItemsViewController::" + #function + " => self.selectedCategory is null, so cannot realm.write the newItem!")
             }
 
             #else
@@ -241,6 +229,27 @@ class ItemsViewController: UITableViewController {
     }
     #elseif Realm
     // loadItems() in Realm Swift 4.4.1+ is replaced with results.observe
+    
+    func observeRealmResultsAndUpdateTableView() {
+        // Set results notification block
+        self.notificationToken = results.observe { (changes: RealmCollectionChange) in
+            switch changes {
+            case .initial:
+                // Results are now populated and can be accessed without blocking the UI
+                self.tableView.reloadData()
+            case .update(_, let deletions, let insertions, let modifications):
+                // Query results have changed, so apply them to the TableView
+                self.tableView.beginUpdates()
+                self.tableView.insertRows(at: insertions.map { IndexPath(row: $0, section: 0) }, with: .automatic)
+                self.tableView.deleteRows(at: deletions.map { IndexPath(row: $0, section: 0) }, with: .automatic)
+                self.tableView.reloadRows(at: modifications.map { IndexPath(row: $0, section: 0) }, with: .automatic)
+                self.tableView.endUpdates()
+            case .error(let err):
+                // An error occurred while opening the Realm file on the background worker thread
+                fatalError("\(err)")
+            }
+        }
+    }
     #else
     func loadItems() {
         if let safeData = try? Data(contentsOf: dataFilePath!) {

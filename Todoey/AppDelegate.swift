@@ -19,7 +19,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
 
-
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         //print(#function + " => " + NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).last! as String)
         #if CoreData
@@ -29,11 +28,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         print(#function + " => Realm Target")
         print(#function + " => \(Realm.Configuration.defaultConfiguration.fileURL)")
         
-        do {
-            let realm = try Realm()
-        } catch {
-            print("Error initializing a new Realm(): \(error)")
-        }
+//        do {
+//            let realm = try Realm()
+//        } catch {
+//            print("Error initializing a new Realm(): \(error)")
+//        }
         
         #else // PList
         print(#function + " => PList Target")
