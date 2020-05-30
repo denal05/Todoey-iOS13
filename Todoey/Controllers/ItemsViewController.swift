@@ -146,17 +146,16 @@ class ItemsViewController: UITableViewController {
                     let newItem = RealmItem()
                     newItem.title = textField.text!
                     newItem.dateCreated = Date()
-                    currentCategory.items.append(newItem)
-
-                    self.realm.beginWrite()
-                 /* self.realm.create(RealmItem.self, value: [textField.text!, Date(), ]) */
-                    self.realm.add(newItem)
-                    try! self.realm.commitWrite()
-                    self.observeRealmResultsAndUpdateTableView()
                     
-//                    try! self.realm.write {
-//                        self.realm.add(newItem)
-//                    }
+                    self.realm.beginWrite()
+                    // https://stackoverflow.com/questions/37355078/what-is-the-difference-between-add-and-create
+                    //self.realm.create(RealmItem.self, value: [textField.text!, Date(), ])
+                    self.realm.add(newItem)
+                    currentCategory.items.append(newItem)
+                    try! self.realm.commitWrite()
+                    
+                    // Updating the tableView by inserting, deleting or reloading rows fixes "NSInternalInconsistencyException, reason: Invalid update: invalid number of rows in section 0."
+                    self.observeRealmResultsAndUpdateTableView()                    
                 } catch {
                     print("Error writing and adding Item to Realm: \(error)")
                 }

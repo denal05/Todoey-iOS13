@@ -160,7 +160,6 @@ class CategoriesViewController: UITableViewController {
         let destinationVC = segue.destination as! ItemsViewController
         if let safeIndexPath = tableView.indexPathForSelectedRow {
             #if CoreData
-            //destinationVC.selectedCategory = categories?[safeIndexPath.row]
             destinationVC.selectedCategory = categoryArray[safeIndexPath.row]
             #elseif Realm
             let category = results[safeIndexPath.row]
@@ -203,9 +202,12 @@ class CategoriesViewController: UITableViewController {
                 newCategory.name = textField.text!
 
                 self.realm.beginWrite()
-             /* self.realm.create(RealmCategory.self, value: [textField.text!, Date(), ]) */
+                // https://stackoverflow.com/questions/37355078/what-is-the-difference-between-add-and-create
+                //self.realm.create(RealmCategory.self, value: [textField.text!, Date(), ])
                 self.realm.add(newCategory)
                 try! self.realm.commitWrite()
+                
+                // Updating the tableView by inserting, deleting or reloading rows fixes "NSInternalInconsistencyException, reason: Invalid update: invalid number of rows in section 0."
                 self.observeRealmResultsAndUpdateTableView()
             } catch {
                 print("Error writing and adding Category to Realm: \(error)")
