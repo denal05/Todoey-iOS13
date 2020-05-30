@@ -212,7 +212,9 @@ class ItemsViewController: UITableViewController {
     #if CoreData
     func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest(), and predicate: NSPredicate? = nil) {
         do {
-            let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHED %@", selectedCategory!.name!)
+            // 'NSInvalidArgumentException', reason: 'Unable to parse the format string "parentCategory.name MATCHED %@"'
+            //let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHED %@", selectedCategory!.name!)
+            let categoryPredicate = NSPredicate(format: "parentCategory.name = %@", selectedCategory!.name!)
             
             if let additionalPredicate = predicate {
                 request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, additionalPredicate])
@@ -241,6 +243,23 @@ class ItemsViewController: UITableViewController {
                 self.tableView.beginUpdates()
                 self.tableView.insertRows(at: insertions.map { IndexPath(row: $0, section: 0) }, with: .automatic)
                 self.tableView.deleteRows(at: deletions.map { IndexPath(row: $0, section: 0) }, with: .automatic)
+                
+                // https://stackoverflow.com/a/60367346/4669096
+                /* Calling tableView.reloadRows() here seems to cause the
+                 [TableView] Warning: "UITableView was told to layout its
+                 visible cells and other contents without being in the view
+                 hierarchy (the table view or one of its superviews has not been
+                 added to a window). This may cause bugs by forcing views inside
+                 the table view to load and perform layout without accurate
+                 information (e.g. table view bounds, trait collection, layout
+                 margins, safe area insets, etc), and will also cause
+                 unnecessary performance overhead due to extra layout passes.
+                 Make a symbolic breakpoint at
+                 UITableViewAlertForLayoutOutsideViewHierarchy to catch this in
+                 the debugger and see what caused this to occur, so you can
+                 avoid this action altogether if possible, or defer it until the
+                 table view has been added to a window."
+                */
                 self.tableView.reloadRows(at: modifications.map { IndexPath(row: $0, section: 0) }, with: .automatic)
                 self.tableView.endUpdates()
             case .error(let err):
@@ -285,7 +304,9 @@ extension ItemsViewController: UISearchBarDelegate {
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         if searchBar.text?.count == 0 {
+            #if Realm
             results = selectedCategory!.items.sorted(byKeyPath: "title", ascending: true)
+            #endif
             tableView.reloadData()
             DispatchQueue.main.async {
                 searchBar.resignFirstResponder()
