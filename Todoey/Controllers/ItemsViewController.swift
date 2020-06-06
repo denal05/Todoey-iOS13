@@ -14,7 +14,7 @@ import CoreData
 import RealmSwift
 #endif
 
-class ItemsViewController: UITableViewController {
+class ItemsViewController: SwipeTableViewController {
     #if CoreData
     var itemArray = [Item]()
     var selectedCategory: `Category`? {
@@ -75,13 +75,15 @@ class ItemsViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ItemCell", for: indexPath)
+        var cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
         
         #if CoreData
         let item = itemArray[indexPath.row]
         cell.textLabel?.text = item.title
         cell.accessoryType = item.done ? .checkmark : .none
         #elseif Realm
+        // Override cell for target Realm by calling super
+        cell = super.tableView(tableView, cellForRowAt: indexPath)
         let item = results[indexPath.row]
         cell.textLabel?.text = item.title
         cell.accessoryType   = item.done ? .checkmark : .none
@@ -230,6 +232,14 @@ class ItemsViewController: UITableViewController {
     }
     #elseif Realm
     // loadItems() in Realm Swift 4.4.1+ is replaced with results.observe
+    
+    override func updateModel(at indexPath: IndexPath) {
+        let itemForDeletion = self.results[indexPath.row]
+        self.realm.beginWrite()
+        self.realm.delete(itemForDeletion)
+        try! self.realm.commitWrite()
+        observeRealmResultsAndUpdateTableView()
+    }
     
     func observeRealmResultsAndUpdateTableView() {
         // Set results notification block

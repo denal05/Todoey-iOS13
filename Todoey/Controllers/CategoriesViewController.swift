@@ -12,10 +12,9 @@ import UIKit
 import CoreData
 #elseif Realm
 import RealmSwift
-import SwipeCellKit
 #endif
 
-class CategoriesViewController: UITableViewController {
+class CategoriesViewController: SwipeTableViewController {
 
     #if CoreData
     // Surround class name Category with backticks to avoid confusion with Opaque Pointer called Category
@@ -46,7 +45,6 @@ class CategoriesViewController: UITableViewController {
         loadCategories()
         #elseif Realm
         observeRealmResultsAndUpdateTableView()
-        tableView.rowHeight = 80.0
         #else
         //loadCategories()
         #endif
@@ -68,23 +66,17 @@ class CategoriesViewController: UITableViewController {
         return 0
         #endif
     }
-    
-//    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-//        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell") as! SwipeTableViewCell
-//        cell.delegate = self
-//        return cell
-//    }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath) as! SwipeTableViewCell
 
         #if CoreData
+        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
         let category = categoryArray[indexPath.row]
         cell.textLabel?.text = category.name
         #elseif Realm
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         let category = results[indexPath.row]
-        cell.textLabel?.text = category.name
-        cell.delegate = self
+        cell.textLabel?.text = category.name ?? "No Categories Added Yet"
         #else
         #endif
 
@@ -146,11 +138,7 @@ class CategoriesViewController: UITableViewController {
         }
         tableView.reloadData()
     }
-    #elseif Realm
-    #else
-    #endif
     
-    #if CoreData
     func loadCategories(with request: NSFetchRequest<`Category`> = `Category`.fetchRequest()) {
         do {
             categoryArray = try context.fetch(request)
@@ -161,6 +149,18 @@ class CategoriesViewController: UITableViewController {
         tableView.reloadData()
     }
     #elseif Realm
+    #else
+    #endif
+    
+    #if CoreData
+    #elseif Realm
+    override func updateModel(at indexPath: IndexPath) {
+        let categoryForDeletion = self.results[indexPath.row]
+        self.realm.beginWrite()
+        self.realm.delete(categoryForDeletion)
+        try! self.realm.commitWrite()
+        observeRealmResultsAndUpdateTableView()
+    }
     #else
     #endif
     
@@ -260,34 +260,4 @@ class CategoriesViewController: UITableViewController {
         }
     }
     #endif
-}
-
-//MARK: - Swipe Cell Delegate Methods
-
-extension CategoriesViewController: SwipeTableViewCellDelegate {
-    func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> [SwipeAction]? {
-        guard orientation == .right else { return nil }
-
-        let deleteAction = SwipeAction(style: .destructive, title: "Delete") { action, indexPath in
-            // handle action by updating model with deletion
-            let category = self.results[indexPath.row]
-            self.realm.beginWrite()
-            self.realm.delete(category)
-            try! self.realm.commitWrite()
-            
-            self.observeRealmResultsAndUpdateTableView()
-        }
-
-        // customize the action appearance
-        deleteAction.image = UIImage(named: "delete-icon")
-
-        return [deleteAction]
-    }
-    
-    func tableView(_ tableView: UITableView, editActionsOptionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> SwipeOptions {
-        var options = SwipeOptions()
-        options.expansionStyle = .destructive
-        options.transitionStyle = .border
-        return options
-    }
 }
