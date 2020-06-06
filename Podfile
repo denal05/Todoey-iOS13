@@ -21,4 +21,5 @@ target 'Todoey-Realm' do
   use_frameworks!
 
   pod 'RealmSwift', '~> 5'
+  pod 'SwipeCellKit'
 end
