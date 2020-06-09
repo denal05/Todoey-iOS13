@@ -22,4 +22,5 @@ target 'Todoey-Realm' do
 
   pod 'RealmSwift', '~> 5'
   pod 'SwipeCellKit'
+  pod 'ChameleonFramework/Swift', :git => 'https://github.com/wowansm/Chameleon.git', :branch => 'swift5'
 end
