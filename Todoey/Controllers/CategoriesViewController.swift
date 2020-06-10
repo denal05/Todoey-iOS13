@@ -52,6 +52,12 @@ class CategoriesViewController: SwipeTableViewController {
         #endif
     }
 
+    override func viewWillAppear(_ animated: Bool) {
+        guard let navBar = navigationController?.navigationBar else {fatalError(#function + " => Navigation Controller Does Not Exist Right Now")}
+        navBar.backgroundColor = UIColor(hexString: "ffffff")
+        navBar.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor: ContrastColorOf((navigationController?.navigationBar.backgroundColor)!, returnFlat: true)]
+    }
+    
     // MARK: - Table view data source methods
     
     override func numberOfSections(in tableView: UITableView) -> Int {

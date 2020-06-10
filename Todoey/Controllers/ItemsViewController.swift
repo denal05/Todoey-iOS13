@@ -16,6 +16,8 @@ import ChameleonFramework
 #endif
 
 class ItemsViewController: SwipeTableViewController {
+    @IBOutlet weak var searchBar: UISearchBar!
+    
     #if CoreData
     var itemArray = [Item]()
     var selectedCategory: `Category`? {
@@ -61,6 +63,19 @@ class ItemsViewController: SwipeTableViewController {
         print(dataFilePath)
         loadItems()
         #endif
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        title = selectedCategory!.name
+        if let catBgColourHexString = selectedCategory?.colour {
+            guard let navBar = navigationController?.navigationBar else {fatalError(#function + " => Navigation Controller Does Not Exist Right Now")}
+            if let navBarColour = UIColor(hexString: catBgColourHexString) {
+                navBar.backgroundColor = navBarColour
+                navBar.tintColor = ContrastColorOf(navBar.backgroundColor!, returnFlat: true)
+                navBar.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor: ContrastColorOf(navBarColour, returnFlat: true)]
+                searchBar.barTintColor = navBarColour
+            }
+        }
     }
     
     //MARK: - Tableview Datasource Methods
