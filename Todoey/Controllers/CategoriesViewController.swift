@@ -12,6 +12,7 @@ import UIKit
 import CoreData
 #elseif Realm
 import RealmSwift
+import ChameleonFramework
 #endif
 
 class CategoriesViewController: SwipeTableViewController {
@@ -44,6 +45,7 @@ class CategoriesViewController: SwipeTableViewController {
         #if CoreData
         loadCategories()
         #elseif Realm
+        tableView.separatorStyle = .none
         observeRealmResultsAndUpdateTableView()
         #else
         //loadCategories()
@@ -77,6 +79,7 @@ class CategoriesViewController: SwipeTableViewController {
         let cell = super.tableView(tableView, cellForRowAt: indexPath)
         let category = results[indexPath.row]
         cell.textLabel?.text = category.name ?? "No Categories Added Yet"
+        cell.backgroundColor = UIColor(hexString: results[indexPath.row].colour ?? "1D9BF6")
         #else
         #endif
 
@@ -209,6 +212,7 @@ class CategoriesViewController: SwipeTableViewController {
             do {
                 let newCategory = RealmCategory()
                 newCategory.name = textField.text!
+                newCategory.colour = UIColor.randomFlat().hexValue()
 
                 self.realm.beginWrite()
                 // https://stackoverflow.com/questions/37355078/what-is-the-difference-between-add-and-create
