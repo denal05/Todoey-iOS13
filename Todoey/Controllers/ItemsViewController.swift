@@ -12,6 +12,7 @@ import UIKit
 import CoreData
 #elseif Realm
 import RealmSwift
+import ChameleonFramework
 #endif
 
 class ItemsViewController: SwipeTableViewController {
@@ -54,6 +55,7 @@ class ItemsViewController: SwipeTableViewController {
         loadItems()
         #elseif Realm
         observeRealmResultsAndUpdateTableView()
+        tableView.separatorStyle = .none
         #else
         print("ItemsViewController::" + #function + " => ")
         print(dataFilePath)
@@ -87,6 +89,8 @@ class ItemsViewController: SwipeTableViewController {
         let item = results[indexPath.row]
         cell.textLabel?.text = item.title
         cell.accessoryType   = item.done ? .checkmark : .none
+        cell.backgroundColor = UIColor(hexString: selectedCategory!.colour)?.darken(byPercentage: CGFloat(indexPath.row) / CGFloat(results.count))
+        cell.textLabel?.textColor = ContrastColorOf(cell.backgroundColor!, returnFlat: true)
         #else
         #endif
         
